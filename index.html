@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Collaborative Text Box</title>
+    <title>Collaborative Chat Box</title>
     <style>
-        body {
+        /* ... (previous styles remain the same) ... */
+body {
             font-family: 'Roboto', sans-serif;
             background: linear-gradient(135deg, #2a0845 0%, #6441A5 100%);
             color: #fff;
@@ -64,9 +65,30 @@
             box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3), inset 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
+        .input-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .input-container input {
+            flex: 1;
+            padding: 10px;
+            font-size: 16px;
+            border: none;
+            border-radius: 10px;
+            background-color: rgba(255, 255, 255, 0.05);
+            color: #fff;
+        }
+
+        .input-container input:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+        }
+
         .button-container {
             display: flex;
-            justify-content: center;
+            justify-content: space-between;
         }
 
         button {
@@ -95,13 +117,50 @@
             font-size: 14px;
             opacity: 0.8;
         }
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        button {
+            flex: 1;
+            min-width: 120px;
+            padding: 12px 25px;
+            font-size: 16px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
     </style>
 </head>
 <body>
     <div class="card">
-        <h1>Collaborative Text Box</h1>
-        <textarea id="text-box" placeholder="Start typing here..."></textarea>
+        <h1>Collaborative Chat Box</h1>
+        <textarea id="text-box" readonly></textarea>
+        <div class="input-container">
+            <input type="text" id="name-input" placeholder="Your name">
+        </div>
+        <div class="input-container">
+            <input type="text" id="message-input" placeholder="Type your message">
+        </div>
         <div class="button-container">
+            <button id="send-btn">Send</button>
+            <button id="update-btn">Update</button>
+            <button id="clear-btn">Clear</button>
             <button id="copy-btn">Copy Text</button>
         </div>
         <div id="status"></div>
@@ -110,13 +169,19 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
         const textBox = document.getElementById('text-box');
+        const nameInput = document.getElementById('name-input');
+        const messageInput = document.getElementById('message-input');
+        const sendBtn = document.getElementById('send-btn');
+        const updateBtn = document.getElementById('update-btn');
+        const clearBtn = document.getElementById('clear-btn');
         const copyBtn = document.getElementById('copy-btn');
         const statusDiv = document.getElementById('status');
         const binId = '66f7dd6fe41b4d34e43969ab';
         const apiKey = '$2a$10$mGmn6g4farD65bRalFEc2.iczQxbNZhOM6TUmq9XMHnsv9uYmlcVy';
         const apiUrl = `https://api.jsonbin.io/v3/b/${binId}`;
 
-        let isTyping = false;
+        const PASSWORD = 'my'; // Replace with your desired password
+
         let refreshTimer;
 
         function loadText() {
@@ -127,11 +192,11 @@
             })
             .then(response => {
                 textBox.value = response.data.record.text || '';
-                updateStatus('Text loaded successfully');
+                updateStatus('Chat loaded successfully');
             })
             .catch(error => {
-                console.error('Error loading text:', error);
-                updateStatus('Error loading text');
+                console.error('Error loading chat:', error);
+                updateStatus('Error loading chat');
             });
         }
 
@@ -143,20 +208,18 @@
                 }
             })
             .then(() => {
-                updateStatus('Text updated successfully');
+                updateStatus('Chat updated successfully');
             })
             .catch(error => {
-                console.error('Error updating text:', error);
-                updateStatus('Error updating text');
+                console.error('Error updating chat:', error);
+                updateStatus('Error updating chat');
             });
         }
 
         function startRefreshTimer() {
             clearTimeout(refreshTimer);
             refreshTimer = setTimeout(() => {
-                if (!isTyping) {
-                    loadText();
-                }
+                loadText();
             }, 5000);
         }
 
@@ -167,18 +230,39 @@
             }, 3000);
         }
 
+        function clearChat() {
+            const password = prompt('Enter the password to clear the chat:');
+            if (password === PASSWORD) {
+                textBox.value = '';
+                updateText();
+                updateStatus('Chat cleared successfully');
+            } else {
+                updateStatus('Incorrect password');
+            }
+        }
+
         loadText();
 
-        let debounceTimer;
-        textBox.addEventListener('input', () => {
-            isTyping = true;
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => {
+        sendBtn.addEventListener('click', () => {
+            const name = nameInput.value.trim();
+            const message = messageInput.value.trim();
+            if (name && message) {
+                const newMessage = `${name}: ${message}\n`;
+                textBox.value += newMessage;
                 updateText();
-                isTyping = false;
-                startRefreshTimer();
-            }, 1000);
+                messageInput.value = '';
+                updateStatus('Message sent');
+            } else {
+                updateStatus('Please enter both name and message');
+            }
         });
+
+        updateBtn.addEventListener('click', () => {
+            loadText();
+            updateStatus('Chat updated manually');
+        });
+
+        clearBtn.addEventListener('click', clearChat);
 
         copyBtn.addEventListener('click', () => {
             textBox.select();
