@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Collaborative Chat Box</title>
     <style>
-        /* ... (previous styles remain the same) ... */
-body {
+        body {
             font-family: 'Roboto', sans-serif;
             background: linear-gradient(135deg, #2a0845 0%, #6441A5 100%);
             color: #fff;
@@ -89,37 +88,6 @@ body {
         .button-container {
             display: flex;
             justify-content: space-between;
-        }
-
-        button {
-            padding: 12px 25px;
-            font-size: 16px;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            background-color: rgba(255, 255, 255, 0.1);
-            color: #fff;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-weight: bold;
-        }
-
-        button:hover {
-            background-color: rgba(255, 255, 255, 0.2);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        #status {
-            text-align: center;
-            margin-top: 20px;
-            font-size: 14px;
-            opacity: 0.8;
-        }
-        .button-container {
-            display: flex;
-            justify-content: space-between;
             flex-wrap: wrap;
             gap: 10px;
         }
@@ -145,6 +113,13 @@ body {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
         }
+
+        #status {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            opacity: 0.8;
+        }
     </style>
 </head>
 <body>
@@ -159,7 +134,6 @@ body {
         </div>
         <div class="button-container">
             <button id="send-btn">Send</button>
-            <button id="update-btn">Update</button>
             <button id="clear-btn">Clear</button>
             <button id="copy-btn">Copy Text</button>
         </div>
@@ -172,7 +146,6 @@ body {
         const nameInput = document.getElementById('name-input');
         const messageInput = document.getElementById('message-input');
         const sendBtn = document.getElementById('send-btn');
-        const updateBtn = document.getElementById('update-btn');
         const clearBtn = document.getElementById('clear-btn');
         const copyBtn = document.getElementById('copy-btn');
         const statusDiv = document.getElementById('status');
@@ -182,8 +155,6 @@ body {
 
         const PASSWORD = 'my'; // Replace with your desired password
 
-        let refreshTimer;
-
         function loadText() {
             axios.get(apiUrl, {
                 headers: {
@@ -192,7 +163,7 @@ body {
             })
             .then(response => {
                 textBox.value = response.data.record.text || '';
-                updateStatus('Chat loaded successfully');
+                updateStatus('');
             })
             .catch(error => {
                 console.error('Error loading chat:', error);
@@ -216,13 +187,6 @@ body {
             });
         }
 
-        function startRefreshTimer() {
-            clearTimeout(refreshTimer);
-            refreshTimer = setTimeout(() => {
-                loadText();
-            }, 5000);
-        }
-
         function updateStatus(message) {
             statusDiv.textContent = message;
             setTimeout(() => {
@@ -241,7 +205,13 @@ body {
             }
         }
 
+        function autoUpdate() {
+            loadText();
+            setTimeout(autoUpdate, 1000);
+        }
+
         loadText();
+        autoUpdate();
 
         sendBtn.addEventListener('click', () => {
             const name = nameInput.value.trim();
@@ -257,11 +227,6 @@ body {
             }
         });
 
-        updateBtn.addEventListener('click', () => {
-            loadText();
-            updateStatus('Chat updated manually');
-        });
-
         clearBtn.addEventListener('click', clearChat);
 
         copyBtn.addEventListener('click', () => {
@@ -269,11 +234,6 @@ body {
             document.execCommand('copy');
             updateStatus('Text copied to clipboard');
         });
-
-        startRefreshTimer();
-
-        document.addEventListener('mousemove', startRefreshTimer);
-        document.addEventListener('keypress', startRefreshTimer);
     </script>
 </body>
 </html>
