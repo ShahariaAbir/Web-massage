@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collaborative Text Box</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #2a0845 0%, #6441A5 100%);
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .card {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            max-width: 600px;
+            width: 100%;
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        h1 {
+            margin-top: 0;
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+
+        #text-box {
+            width: 100%;
+            height: 150px;
+            font-size: 16px;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            background-color: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            resize: none;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+            margun-right: 100px;
+        }
+
+        #text-box:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        button:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Collaborative Text Box</h1>
+        <textarea id="text-box" placeholder="Start typing here..."></textarea>
+        <div class="button-container">
+            <button id="copy-btn">Copy Text</button>
+            
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        const textBox = document.getElementById('text-box');
+        const copyBtn = document.getElementById('copy-btn');
+        const pasteBtn = document.getElementById('paste-btn');
+        const binId = '66f7dd6fe41b4d34e43969ab'; // Replace with your actual bin ID
+        const apiKey = '$2a$10$mGmn6g4farD65bRalFEc2.iczQxbNZhOM6TUmq9XMHnsv9uYmlcVy'; // Replace with your actual API key
+        const apiUrl = `https://api.jsonbin.io/v3/b/${binId}`;
+
+        let isTyping = false;
+        let refreshTimer;
+
+        function loadText() {
+            axios.get(apiUrl, {
+                headers: {
+                    'X-Master-Key': apiKey
+                }
+            })
+            .then(response => {
+                textBox.value = response.data.record.text || '';
+            })
+            .catch(error => {
+                console.error('Error loading text:', error);
+            });
+        }
+
+        function updateText() {
+            axios.put(apiUrl, { text: textBox.value }, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Master-Key': apiKey
+                }
+            })
+            .catch(error => {
+                console.error('Error updating text:', error);
+            });
+        }
+
+        function startRefreshTimer() {
+            clearTimeout(refreshTimer);
+            refreshTimer = setTimeout(() => {
+                if (!isTyping) {
+                    loadText();
+                }
+            }, 5000);
+        }
+
+        // Load the initial text
+        loadText();
+
+        // Update the text when the user types
+        let debounceTimer;
+        textBox.addEventListener('input', () => {
+            isTyping = true;
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                updateText();
+                isTyping = false;
+                startRefreshTimer();
+            }, 1000);
+        });
+
+        // Copy text button
+        copyBtn.addEventListener('click', () => {
+            textBox.select();
+            document.execCommand('copy');
+        });
+
+       
+
+        // Start the refresh timer when the page loads
+        startRefreshTimer();
+
+        // Restart the refresh timer when the user interacts with the page
+        document.addEventListener('mousemove', startRefreshTimer);
+        document.addEventListener('keypress', startRefreshTimer);
+    </script>
+</body>
+</html>
