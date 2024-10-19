@@ -6,7 +6,8 @@
     <title>Web Chat</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-       :root {
+        /* ... (previous CSS remains the same) ... */
+   :root {
             --primary-color: #8E2DE2;
             --secondary-color: #4A00E0;
             --text-color: #ffffff;
@@ -234,7 +235,7 @@
             width: 300px;
             height: 100vh;
             background-color: var(--card-bg);
-            padding: px;
+            padding: 0px;
             box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
             transition: right 0.3s ease;
             z-index: 999;
@@ -247,6 +248,36 @@
         .menu button {
             width: 100%;
             margin-bottom: 10px;
+        }
+
+        #name-prompt {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1001;
+        }
+
+        #name-prompt-content {
+            background-color: var(--card-bg);
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+        }
+
+        #name-prompt input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: var(--input-bg);
+            color: var(--text-color);
         }
 
         @media (max-width: 600px) {
@@ -275,75 +306,47 @@
                 right: -100%;
             }
         
-
-        .message {
-            background-color: rgba(255, 255, 255, 0.05);
+        #ip-list {
+            background-color: var(--card-bg);
+            padding: 20px;
             border-radius: 10px;
-            padding: 10px;
-            margin-bottom: 15px;
-            animation: messageIn 0.3s ease-out;
-            transition: all 0.3s ease;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            position: relative;
-            overflow: hidden;
+            margin-top: 20px;
+            display: none;
         }
 
-        .message::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(
-                to right,
-                rgba(255, 255, 255, 0) 0%,
-                rgba(255, 255, 255, 0.3) 50%,
-                rgba(255, 255, 255, 0) 100%
-            );
-            animation: lightEffect 3s infinite linear;
-            pointer-events: none;
+        #ip-list h3 {
+            margin-top: 0;
         }
 
-        @keyframes lightEffect {
-            0% {
-                transform: rotate(0deg) translate(-50%, -50%);
-            }
-            100% {
-                transform: rotate(360deg) translate(-50%, -50%);
-            }
+        #ip-list ul {
+            list-style-type: none;
+            padding: 0;
         }
 
-        .message:hover {
-            transform: translateX(5px);
-            background-color: rgba(255, 255, 255, 0.08);
+        #ip-list li {
+            margin-bottom: 10px;
         }
-
-        .message .timestamp-ip {
-            font-size: 0.8em;
-            color: var(--time-color);
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        /* ... (rest of the styles remain the same) ... */
     </style>
 </head>
 <body>
-  <div class="menu-icon" id="menu-icon">☰</div>
+    <div id="name-prompt">
+        <div id="name-prompt-content">
+            <h2>Welcome to Web Chat</h2>
+            <p>Please enter your name to start chatting:</p>
+            <input type="text" id="name-input" placeholder="Your name">
+            <button id="start-chat-btn">Start Chatting</button>
+        </div>
+    </div>
+    <div class="menu-icon" id="menu-icon">☰</div>
     <div class="menu" id="menu">
         <button id="clear-btn">Clear Chat</button>
         <button id="download-btn">Download Chat</button>
         <button id="theme-btn">Toggle Theme</button>
+        <button id="view-ip-btn">View IP Addresses</button>
     </div>
     <div class="card">
         <h1>Web Chat Made By S.Abir</h1>
         <div id="chat-container"></div>
-        <div class="input-container">
-            <input type="text" id="name-input" placeholder="Your name">
-        </div>
         <div class="input-container">
             <input type="text" id="message-input" placeholder="Type your message">
         </div>
@@ -352,32 +355,92 @@
         </div>
         <div id="status"></div>
         <div id="online-users">Online users: 1</div>
+        <div id="ip-list">
+            <h3>User IP Addresses</h3>
+            <ul id="ip-list-content"></ul>
+        </div>
     </div>
 
     <script>
-       const chatContainer = document.getElementById('chat-container');
+        const chatContainer = document.getElementById('chat-container');
         const nameInput = document.getElementById('name-input');
         const messageInput = document.getElementById('message-input');
         const sendBtn = document.getElementById('send-btn');
         const clearBtn = document.getElementById('clear-btn');
         const downloadBtn = document.getElementById('download-btn');
         const themeBtn = document.getElementById('theme-btn');
+        const viewIpBtn = document.getElementById('view-ip-btn');
         const statusDiv = document.getElementById('status');
         const onlineUsersDiv = document.getElementById('online-users');
         const menuIcon = document.getElementById('menu-icon');
         const menu = document.getElementById('menu');
-        const binId = '66f7dd6fe41b4d34e43969ab';
-        const apiKey = '$2a$10$mGmn6g4farD65bRalFEc2.iczQxbNZhOM6TUmq9XMHnsv9uYmlcVy';
+        const namePrompt = document.getElementById('name-prompt');
+        const startChatBtn = document.getElementById('start-chat-btn');
+        const ipList = document.getElementById('ip-list');
+        const ipListContent = document.getElementById('ip-list-content');
+        const binId = '6713857be41b4d34e44564fb';
+        const apiKey = '$2a$10$C4RBtB.5xKGlAfHSTH6yvOicewt3IeZbhsvHwX1Q1ACLHLCtosgcm';
         const apiUrl = `https://api.jsonbin.io/v3/b/${binId}`;
 
         const PASSWORD = 'my'; // Replace with your desired password
+        const ADMIN_PASSWORD = 'admn123'; // Replace with your desired admin password
         let onlineUsers = 1;
         let lastMessageTimestamp = 0;
+        let userName = '';
+        let userIP = '';
 
-        // Load saved name from localStorage
-        const savedName = localStorage.getItem('chatUserName');
-        if (savedName) {
-            nameInput.value = savedName;
+        // Check if user name is already stored
+        if (localStorage.getItem('chatUserName')) {
+            userName = localStorage.getItem('chatUserName');
+            namePrompt.style.display = 'none';
+            getUserIP();
+        }
+
+        startChatBtn.addEventListener('click', () => {
+            const name = nameInput.value.trim();
+            if (name) {
+                userName = name;
+                localStorage.setItem('chatUserName', userName);
+                namePrompt.style.display = 'none';
+                getUserIP();
+            } else {
+                alert('Please enter a valid name.');
+            }
+        });
+
+        async function getUserIP() {
+            try {
+                const response = await fetch('https://api.ipify.org?format=json');
+                const data = await response.json();
+                userIP = data.ip;
+                saveUserIP(userName, userIP);
+            } catch (error) {
+                console.error('Error getting user IP:', error);
+            }
+        }
+
+        async function saveUserIP(name, ip) {
+            try {
+                const response = await fetch(apiUrl, {
+                    headers: {
+                        'X-Master-Key': apiKey
+                    }
+                });
+                const data = await response.json();
+                const users = data.record.users || [];
+                const updatedUsers = [...users.filter(user => user.name !== name), { name, ip }];
+                
+                await fetch(apiUrl, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': apiKey
+                    },
+                    body: JSON.stringify({ ...data.record, users: updatedUsers })
+                });
+            } catch (error) {
+                console.error('Error saving user IP:', error);
+            }
         }
 
         async function loadText() {
@@ -435,7 +498,7 @@
                         'Content-Type': 'application/json',
                         'X-Master-Key': apiKey
                     },
-                    body: JSON.stringify({ messages: updatedMessages })
+                    body: JSON.stringify({ ...data.record, messages: updatedMessages })
                 });
                 
                 updateStatus('Message sent successfully');
@@ -457,13 +520,19 @@
             const password = prompt('Enter the password to clear the chat:');
             if (password === PASSWORD) {
                 try {
+                    const response = await fetch(apiUrl, {
+                        headers: {
+                            'X-Master-Key': apiKey
+                        }
+                    });
+                    const data = await response.json();
                     await fetch(apiUrl, {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json',
                             'X-Master-Key': apiKey
                         },
-                        body: JSON.stringify({ messages: [] })
+                        body: JSON.stringify({ ...data.record, messages: [] })
                     });
                     await loadText();
                     updateStatus('Chat cleared successfully');
@@ -518,25 +587,48 @@
             menu.classList.toggle('open');
         }
 
+        async function viewIPAddresses() {
+            const password = prompt('Enter the admin password to view IP addresses:');
+            if (password === ADMIN_PASSWORD) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        headers: {
+                            'X-Master-Key': apiKey
+                        }
+                    });
+                    const data = await response.json();
+                    const users = data.record.users || [];
+                    ipListContent.innerHTML = users.map(user => `
+                        <li><strong>${escapeHtml(user.name)}:</strong> ${escapeHtml(user.ip)}</li>
+                    `).join('');
+                    ipList.style.display = 'block';
+                } catch (error) {
+                    console.error('Error fetching IP addresses:', error);
+                    updateStatus('Error fetching IP addresses');
+                }
+            } else {
+                updateStatus('Incorrect admin password');
+            }
+        }
+
         loadText();
         autoUpdate();
         simulateOnlineUsers();
 
         sendBtn.addEventListener('click', () => {
-            const name = nameInput.value.trim();
             const message = messageInput.value.trim();
-            if (name && message) {
+            if (userName && message) {
                 const newMessage = {
                     timestamp: new Date().toISOString(),
-                    name,
+                    name: userName,
                     text: message
                 };
                 updateText(newMessage);
                 messageInput.value = '';
-                // Save name to localStorage
-                localStorage.setItem('chatUserName', name);
+            } else if (!userName) {
+                updateStatus('Please enter your name first');
             } else {
-                updateStatus('Please enter both name and message');
+                updateStatus('Please enter a message');
             }
         });
 
@@ -555,7 +647,7 @@
         });
 
         themeBtn.addEventListener('click', toggleTheme);
-
+        viewIpBtn.addEventListener('click', viewIPAddresses);
         menuIcon.addEventListener('click', toggleMenu);
 
         messageInput.addEventListener('keypress', (e) => {
@@ -563,49 +655,6 @@
                 sendBtn.click();
             }
         });
-
-        function renderMessages(messages) {
-            chatContainer.innerHTML = messages.map(msg => `
-                <div class="message">
-                    <span class="timestamp-ip">[${new Date(msg.timestamp).toLocaleTimeString()}] [IP: ${msg.ip || 'Unknown'}]</span>
-                    <span class="username">${escapeHtml(msg.name)}:</span>
-                    <span class="text">${escapeHtml(msg.text)}</span>
-                </div>
-            `).join('');
-        }
-
-        async function getIP() {
-            try {
-                const response = await fetch('https://api.ipify.org?format=json');
-                const data = await response.json();
-                return data.ip;
-            } catch (error) {
-                console.error('Error fetching IP:', error);
-                return 'Unknown';
-            }
-        }
-
-        sendBtn.addEventListener('click', async () => {
-            const name = nameInput.value.trim();
-            const message = messageInput.value.trim();
-            if (name && message) {
-                const ip = await getIP();
-                const newMessage = {
-                    timestamp: new Date().toISOString(),
-                    name,
-                    text: message,
-                    ip
-                };
-                updateText(newMessage);
-                messageInput.value = '';
-                // Save name to localStorage
-                localStorage.setItem('chatUserName', name);
-            } else {
-                updateStatus('Please enter both name and message');
-            }
-        });
-
-        // ... (rest of the JavaScript code remains the same) ...
     </script>
 </body>
 </html>
